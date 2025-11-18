@@ -10,6 +10,10 @@ import About from './pages/About';
 import Connect from './pages/Connect';
 import Shop from './pages/Shop';
 
+<Route path="/about" element={<About />} />
+<Route path="/shop" element={<Shop />} />
+<Route path="/connect" element={<Connect />} />
+
 export default function App() {
 	return (
 		<Routes>
@@ -17,10 +21,6 @@ export default function App() {
 				<Route path="/" element={<Home />} />
 				<Route path="/blog" element={<Blog />} />
 				<Route path="/admin" element={<AdminLogin />} />
-				<Route path="/about" element={<About />} />
-				<Route path="/shop" element={<Shop />} />
-				<Route path="/connect" element={<Connect />} />
-
 				<Route
 					path="/account"
 					element={

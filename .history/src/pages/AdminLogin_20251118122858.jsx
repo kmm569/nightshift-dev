@@ -47,7 +47,7 @@ export default function AdminLogin() {
 					</label>
 
 					<label className="auth-label">
-						<span>Password</span>
+						span>Password</span>
 						<input
 							type="password"
 							value={password}
