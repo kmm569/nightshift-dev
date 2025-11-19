@@ -111,10 +111,7 @@ export default function PostDetail() {
 
 	// sync liked/saved state with Firestore on load
 useEffect(() => {
-	const userId = currentUser?.uid;
-	const postId = post?.id;
-
-	if (!userId || !postId) {
+	if (!currentUser || !post || !post.id) {
 		setLiked(false);
 		setSaved(false);
 		return;
@@ -125,8 +122,8 @@ useEffect(() => {
 	(async () => {
 		try {
 			const [likedResult, savedResult] = await Promise.all([
-				hasUserLiked(postId, userId),
-				hasUserSaved(postId, userId),
+				hasUserLiked(post.id, currentUser.uid),
+				hasUserSaved(post.id, currentUser.uid),
 			]);
 
 			if (!cancelled) {
@@ -142,7 +139,6 @@ useEffect(() => {
 		cancelled = true;
 	};
 }, [post?.id, currentUser?.uid]);
-
 
 	// live current user profile for comment header
 	useEffect(() => {

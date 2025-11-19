@@ -109,41 +109,6 @@ export default function PostDetail() {
 		return unsub;
 	}, [post]);
 
-	// sync liked/saved state with Firestore on load
-useEffect(() => {
-	const userId = currentUser?.uid;
-	const postId = post?.id;
-
-	if (!userId || !postId) {
-		setLiked(false);
-		setSaved(false);
-		return;
-	}
-
-	let cancelled = false;
-
-	(async () => {
-		try {
-			const [likedResult, savedResult] = await Promise.all([
-				hasUserLiked(postId, userId),
-				hasUserSaved(postId, userId),
-			]);
-
-			if (!cancelled) {
-				setLiked(likedResult);
-				setSaved(savedResult);
-			}
-		} catch (err) {
-			console.error("Error checking like/save state:", err);
-		}
-	})();
-
-	return () => {
-		cancelled = true;
-	};
-}, [post?.id, currentUser?.uid]);
-
-
 	// live current user profile for comment header
 	useEffect(() => {
 		if (!currentUser || !currentUser.uid) {

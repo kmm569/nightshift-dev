@@ -30,8 +30,7 @@ export default function Layout() {
 							Connect
 						</NavLink>
 
-						{currentUser && <NotificationsBell key={currentUser.uid} />}
-
+						{currentUser && <NotificationsBell />}
 
 						{currentUser ? (
 							<NavLink to="/account" className="nav-link">

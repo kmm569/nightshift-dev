@@ -16,13 +16,7 @@ import {
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import {
-	toggleLike,
-	toggleSave,
-	hasUserLiked,
-	hasUserSaved,
-} from "../lib/posts";
-
+import { toggleLike, toggleSave } from "../lib/posts";
 import { toggleCommentLike } from "../lib/comments";
 import { createNotification } from "../lib/notifications";
 
@@ -108,41 +102,6 @@ export default function PostDetail() {
 
 		return unsub;
 	}, [post]);
-
-	// sync liked/saved state with Firestore on load
-useEffect(() => {
-	const userId = currentUser?.uid;
-	const postId = post?.id;
-
-	if (!userId || !postId) {
-		setLiked(false);
-		setSaved(false);
-		return;
-	}
-
-	let cancelled = false;
-
-	(async () => {
-		try {
-			const [likedResult, savedResult] = await Promise.all([
-				hasUserLiked(postId, userId),
-				hasUserSaved(postId, userId),
-			]);
-
-			if (!cancelled) {
-				setLiked(likedResult);
-				setSaved(savedResult);
-			}
-		} catch (err) {
-			console.error("Error checking like/save state:", err);
-		}
-	})();
-
-	return () => {
-		cancelled = true;
-	};
-}, [post?.id, currentUser?.uid]);
-
 
 	// live current user profile for comment header
 	useEffect(() => {

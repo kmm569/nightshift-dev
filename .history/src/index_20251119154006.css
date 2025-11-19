@@ -1278,44 +1278,17 @@ button:focus-visible {
 	justify-content: center;
 	width: 32px;
 	height: 32px;
-	padding: 0;
 	border-radius: 999px;
 	border: none;
 	background: transparent;
-	color: #ffffff; /* force white so the SVG is visible */
+	color: #c7cbd3;
 	cursor: pointer;
 }
 
 .notifications-bell-button:hover {
 	background: rgba(255, 255, 255, 0.06);
+	color: #ffffff;
 }
-
-.notifications-bell-icon {
-	width: 18px;
-	height: 18px;
-	stroke: currentColor;
-	fill: none;
-	display: block;
-}
-
-.notifications-badge {
-	position: absolute;
-	top: 0;
-	right: 0;
-	transform: translate(50%, -50%);
-	min-width: 16px;
-	height: 16px;
-	padding: 0 4px;
-	border-radius: 999px;
-	background: #ff4b8b;
-	color: #fff;
-	font-size: 11px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-/* panel styles can stay how you already had them */
 
 .notifications-badge {
 	position: absolute;
