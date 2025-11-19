@@ -739,19 +739,6 @@ button:focus-visible {
 	margin-bottom: 1rem;
 }
 
-.post-detail-header-actions {
-	display: flex;
-	align-items: center;
-	justify-content: flex-start; /* or space-between if you want */
-	gap: 0.5rem;
-	flex-wrap: nowrap;
-}
-
-/* kill any old margin rules on buttons inside here */
-.post-detail-header-actions > button {
-	margin: 0;
-}
-
 /* Space between header action buttons (e.g., Back / Edit) */
 .post-detail-header button + button {
 	margin-left: 0.75rem;
@@ -791,17 +778,10 @@ button:focus-visible {
 	transform: translateY(-1px);
 }
 
-/* Author avatar in pill */
-.post-detail-author-wrapper {
-	position: relative;
-	display: inline-block;
-}
-
 .post-detail-author-avatar {
-	width: 32px;
-	height: 32px;
+	width: 28px;
+	height: 28px;
 	border-radius: 50%;
-	overflow: hidden;
 	background: radial-gradient(circle at 30% 20%, #7fb3ff, #35507a);
 	display: flex;
 	align-items: center;
@@ -809,13 +789,6 @@ button:focus-visible {
 	font-size: 0.9rem;
 	font-weight: 600;
 	color: #fff;
-}
-
-.post-detail-author-avatar img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	display: block;
 }
 
 .post-detail-author-text {
@@ -835,15 +808,16 @@ button:focus-visible {
 	font-size: 0.9rem;
 }
 
-/* Banner wrapper: force crop */
+/* Banner wrapper enforces cropping */
+/* Force banner cropping */
 .post-detail-banner-container {
 	width: 100%;
-	height: 340px;
+	height: 340px; /* Adjust as you want */
 	overflow: hidden;
 	border-radius: 0.75rem;
 	margin: 0.75rem 0 1.25rem;
 	position: relative;
-	background: #111;
+	background: #111; /* fallback */
 }
 
 .post-detail-banner-container img {
@@ -852,6 +826,8 @@ button:focus-visible {
 	object-fit: cover;
 	display: block;
 }
+
+
 
 .post-detail-actions {
 	display: flex;
@@ -886,8 +862,34 @@ button:focus-visible {
 	margin: 0 0 0.9rem;
 }
 
-/* Author tooltip card */
+.post-detail-author-wrapper {
+	position: relative;
+	display: inline-block;
+}
 
+/* main pill avatar */
+.post-detail-author-avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	overflow: hidden;
+	background: radial-gradient(circle at 30% 20%, #7fb3ff, #35507a);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #fff;
+}
+
+.post-detail-author-avatar img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+/* tooltip card */
 .author-popup-card {
 	position: absolute;
 	top: 130%;
@@ -897,12 +899,12 @@ button:focus-visible {
 	max-width: 280px;
 	padding: 0.85rem 0.95rem 0.9rem;
 	border-radius: 0.9rem;
-	background: #181a21;           /* solid, not transparent */
+	background: #181a21; /* solid, no transparency */
 	border: 1px solid #2a2d36;
 	box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
 	font-size: 0.9rem;
 
-	opacity: 0;                    /* hidden by default */
+	opacity: 0;
 	pointer-events: none;
 	transform: translateY(6px);
 	transition: opacity 0.12s ease, transform 0.12s ease;
@@ -961,307 +963,4 @@ button:focus-visible {
 	padding: 0.3rem 0.9rem;
 	font-size: 0.8rem;
 	margin-top: 0.25rem;
-}
-
-.user-post-list {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin-top: 0.5rem;
-}
-
-.user-post-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	width: 100%;
-	padding: 0.5rem 0.75rem;
-	border-radius: 999px;
-	background: transparent;
-	border: 1px solid rgba(255, 255, 255, 0.04);
-	color: inherit;
-	cursor: pointer;
-	text-align: left;
-	outline: none;
-	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		transform 0.1s ease;
-}
-
-.user-post-row:hover {
-	background: rgba(255, 255, 255, 0.04);
-	border-color: rgba(255, 255, 255, 0.12);
-	transform: translateY(-1px);
-}
-
-.user-post-title {
-	font-size: 0.9rem;
-	font-weight: 500;
-}
-
-.user-post-date {
-	font-size: 0.75rem;
-	opacity: 0.6;
-	margin-left: 0.75rem;
-	white-space: nowrap;
-}
-
-.btn-danger {
-	background: #b3261e;
-	color: #ffffff;
-	border-radius: 999px;
-	padding: 0.35rem 0.9rem;
-	border: none;
-	cursor: pointer;
-	font-size: 0.85rem;
-	font-weight: 500;
-	transition: background 0.15s ease, transform 0.1s ease, opacity 0.1s ease;
-}
-
-.btn-danger:hover:not(:disabled) {
-	background: #c93a32;
-	transform: translateY(-1px);
-}
-
-.btn-danger:disabled {
-	opacity: 0.6;
-	cursor: default;
-}
-
-.icon-button {
-	border: none;
-	background: rgba(255, 255, 255, 0.06);
-	color: rgba(255, 255, 255, 0.85);
-	border-radius: 999px;
-	padding: 0.4rem 0.55rem;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	transition: background 0.15s ease, opacity 0.15s ease,
-		transform 0.1s ease;
-}
-
-.icon-button:hover:not(:disabled) {
-	background: rgba(255, 255, 255, 0.12);
-	transform: translateY(-1px);
-}
-
-.icon-button:disabled {
-	opacity: 0.5;
-	cursor: default;
-}
-
-.delete-button {
-	color: #ff5252; /* soft red */
-}
-
-.delete-button:hover:not(:disabled) {
-	background: rgba(255, 82, 82, 0.15);
-}
-
-.post-detail-comments {
-	margin-top: 2.5rem;
-	border-top: 1px solid rgba(255, 255, 255, 0.06);
-	padding-top: 1.5rem;
-}
-
-.post-detail-comments h2 {
-	font-size: 1.1rem;
-	margin-bottom: 0.75rem;
-}
-
-.post-comments-meta {
-	font-size: 0.85rem;
-	opacity: 0.7;
-	margin-bottom: 0.75rem;
-}
-
-.post-comments-list {
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
-	margin-bottom: 1.5rem;
-}
-
-.post-comment {
-	display: flex;
-	gap: 0.75rem;
-}
-
-.post-comment-avatar {
-	width: 32px;
-	height: 32px;
-	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.06);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 0.9rem;
-	font-weight: 600;
-	overflow: hidden;
-	flex-shrink: 0;
-}
-
-.post-comment-avatar img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-
-.post-comment-body {
-	flex: 1;
-}
-
-.post-comment-header {
-	display: flex;
-	align-items: baseline;
-	gap: 0.5rem;
-	margin-bottom: 0.15rem;
-}
-
-.post-comment-author {
-	font-size: 0.9rem;
-	font-weight: 500;
-}
-
-.post-comment-date {
-	font-size: 0.75rem;
-	opacity: 0.6;
-}
-
-.post-comment-text {
-	font-size: 0.9rem;
-	opacity: 0.95;
-}
-
-.post-comment-form-wrap {
-	margin-top: 1rem;
-}
-
-.post-comment-form-header {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin-bottom: 0.5rem;
-}
-
-.post-comment-you {
-	font-size: 0.8rem;
-	opacity: 0.7;
-}
-
-.post-comment-input {
-	width: 100%;
-	border-radius: 0.75rem;
-	border: 1px solid rgba(255, 255, 255, 0.06);
-	background: rgba(0, 0, 0, 0.2);
-	color: #fff;
-	padding: 0.6rem 0.75rem;
-	font-size: 0.9rem;
-	resize: vertical;
-	min-height: 80px;
-}
-
-.post-comment-input:focus {
-	outline: none;
-	border-color: rgba(138, 180, 255, 0.7);
-}
-
-.post-comment-actions {
-	margin-top: 0.5rem;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.5rem;
-}
-
-.post-comment-signin {
-	margin-top: 0.5rem;
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	font-size: 0.9rem;
-}
-.post-comment-author-button {
-	background: none;
-	border: none;
-	padding: 0;
-	margin: 0;
-	color: inherit;
-	font: inherit;
-	cursor: pointer;
-	font-size: 0.9rem;
-	font-weight: 500;
-	text-decoration: none;
-}
-
-.post-comment-author-button:hover {
-	text-decoration: underline;
-}
-
-.post-comment-avatar-clickable {
-	cursor: pointer;
-}
-.post-comment-header-actions {
-	display: flex;
-	align-items: center;
-	gap: 0.3rem;
-	margin-left: auto;
-}
-
-.post-comment-reply-button {
-	background: none;
-	border: none;
-	color: rgba(255, 255, 255, 0.7);
-	font-size: 0.8rem;
-	cursor: pointer;
-	padding: 0;
-	margin: 0;
-}
-
-.post-comment-reply-button:hover {
-	color: rgba(255, 255, 255, 0.95);
-	text-decoration: underline;
-}
-
-.comment-delete-button {
-	color: #ff5252;
-}
-
-.comment-delete-button:hover:not(:disabled) {
-	background: rgba(255, 82, 82, 0.15);
-}
-
-.post-comment-replies {
-	margin-top: 0.5rem;
-	margin-left: 2.2rem; /* indent under parent avatar */
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.post-comment-reply {
-	margin-top: 0.1rem;
-}
-
-.post-comment-input-reply {
-	font-size: 0.85rem;
-}
-
-.post-comment-reply-form {
-	margin-top: 0.5rem;
-}
-
-.post-comment-actions-buttons {
-	display: flex;
-	align-items: center;
-	gap: 0.4rem;
-}
-
-/* small variant – reuse your existing btn styles but smaller */
-.btn-sm {
-	padding: 0.25rem 0.6rem;
-	font-size: 0.75rem;
 }

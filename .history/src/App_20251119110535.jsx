@@ -1,18 +1,19 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Layout from "./components/Layout.jsx";
-import Home from "./pages/Home.jsx";
-import Blog from "./pages/Blog.jsx";
-import AdminLogin from "./pages/AdminLogin.jsx";
-import Account from "./pages/Account.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import About from "./pages/About";
-import Connect from "./pages/Connect";
-import Shop from "./pages/Shop";
-import NewPost from "./pages/NewPost.jsx";
-import PostDetail from "./pages/PostDetail.jsx";
-import EditPost from "./pages/EditPost.jsx";
-import UserProfile from "./pages/UserProfile.jsx";
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout.jsx';
+import Home from './pages/Home.jsx';
+import Blog from './pages/Blog.jsx';
+import AdminLogin from './pages/AdminLogin.jsx';
+import Account from './pages/Account.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import About from './pages/About';
+import Connect from './pages/Connect';
+import Shop from './pages/Shop';
+import NewPost from './pages/NewPost.jsx';
+import PostDetail from './pages/PostDetail.jsx';
+import EditPost from './pages/EditPost.jsx';
+import UserProfile from './pages/UserProfile.jsx';
+
 
 export default function App() {
 	return (
@@ -44,7 +45,6 @@ export default function App() {
 				<Route path="/about" element={<About />} />
 				<Route path="/shop" element={<Shop />} />
 				<Route path="/connect" element={<Connect />} />
-				<Route path="/u/:userId" element={<UserProfile />} />
 
 				<Route
 					path="/account"

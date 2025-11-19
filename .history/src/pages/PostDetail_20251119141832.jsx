@@ -1,3 +1,4 @@
+// src/pages/PostDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -9,9 +10,8 @@ import {
 	addDoc,
 	query,
 	orderBy,
-	serverTimestamp,
 	getDoc,
-	where
+	serverTimestamp,
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
@@ -33,7 +33,7 @@ export default function PostDetail() {
 	const [liked, setLiked] = useState(false);
 	const [saved, setSaved] = useState(false);
 
-	// delete state (post)
+	// delete state
 	const [deleting, setDeleting] = useState(false);
 	const [deleteError, setDeleteError] = useState("");
 
@@ -43,14 +43,6 @@ export default function PostDetail() {
 	const [commentText, setCommentText] = useState("");
 	const [commentSubmitting, setCommentSubmitting] = useState(false);
 	const [commentError, setCommentError] = useState("");
-
-	// reply state
-	const [replyingTo, setReplyingTo] = useState(null); // comment id
-	const [replyText, setReplyText] = useState("");
-	const [replySubmitting, setReplySubmitting] = useState(false);
-	const [replyError, setReplyError] = useState("");
-
-	// current user profile for comment header avatar
 	const [currentProfile, setCurrentProfile] = useState(null);
 
 	// Load post content
@@ -101,7 +93,7 @@ export default function PostDetail() {
 		return unsub;
 	}, [post]);
 
-	// live current user profile for comment header
+	// live current user profile (for comment avatar)
 	useEffect(() => {
 		if (!currentUser || !currentUser.uid) {
 			setCurrentProfile(null);
@@ -128,7 +120,6 @@ export default function PostDetail() {
 	}, [currentUser]);
 
 	// Live comments from /posts/{postId}/comments
-	// replies are comments with parentId set
 	useEffect(() => {
 		if (!postId) return;
 
@@ -160,7 +151,7 @@ export default function PostDetail() {
 		return <p>Post not found.</p>;
 	}
 
-	const canEditOrDeletePost =
+	const canEditOrDelete =
 		currentUser &&
 		currentUser.uid &&
 		(currentUser.uid === post.authorId || isAdmin);
@@ -217,8 +208,8 @@ export default function PostDetail() {
 		}
 	};
 
-	const handleDeletePost = async () => {
-		if (!post || !canEditOrDeletePost || deleting) return;
+	const handleDelete = async () => {
+		if (!post || !canEditOrDelete || deleting) return;
 
 		const confirmed = window.confirm(
 			"Delete this post permanently? This cannot be undone."
@@ -231,10 +222,10 @@ export default function PostDetail() {
 		try {
 			const postRef = doc(db, "posts", post.id);
 
-			// delete likes + saves subcollections
+			// 1) Delete likes + saves subcollections
 			const [likesSnap, savesSnap] = await Promise.all([
 				getDocs(collection(db, "posts", post.id, "likes")),
-				getDocs(collection(db, "posts", post.id, "saves"))
+				getDocs(collection(db, "posts", post.id, "saves")),
 			]);
 
 			const subDeletes = [];
@@ -245,13 +236,13 @@ export default function PostDetail() {
 				await Promise.all(subDeletes);
 			}
 
-			// delete banner image from Storage if stored in our bucket
+			// 2) Delete banner image from Storage if it's in our bucket
 			if (post.bannerImageUrl && typeof post.bannerImageUrl === "string") {
 				try {
 					const url = post.bannerImageUrl;
 					const isFirebaseUrl =
 						url.includes("firebasestorage.googleapis.com") ||
-						url.includes("nightshiftdev");
+						url.includes("nightshiftdev"); // your bucket id part
 
 					if (isFirebaseUrl) {
 						const imgRef = ref(storage, url);
@@ -264,7 +255,10 @@ export default function PostDetail() {
 				}
 			}
 
+			// 3) Delete the post document itself
 			await deleteDoc(postRef);
+
+			// 4) Bounce back to blog list
 			navigate("/blog");
 		} catch (err) {
 			console.error("Error deleting post:", err);
@@ -296,19 +290,18 @@ export default function PostDetail() {
 		try {
 			const commentsRef = collection(db, "posts", post.id, "comments");
 
+			// base values from auth
 			let authorName =
 				currentUser.displayName || currentUser.email || "Anonymous";
 			let authorPhotoURL = currentUser.photoURL || null;
 
+			// try to override with profile doc (avatarUrl, displayName, etc.)
 			try {
-				const profileSnap = await getDoc(
-					doc(db, "users", currentUser.uid)
-				);
+				const profileSnap = await getDoc(doc(db, "users", currentUser.uid));
 				if (profileSnap.exists()) {
 					const p = profileSnap.data();
 					authorName = p.displayName || p.name || authorName;
-					authorPhotoURL =
-						p.avatarUrl || p.photoURL || authorPhotoURL;
+					authorPhotoURL = p.avatarUrl || p.photoURL || authorPhotoURL;
 				}
 			} catch (profileErr) {
 				console.error("Error loading profile for comment:", profileErr);
@@ -319,8 +312,7 @@ export default function PostDetail() {
 				authorId: currentUser.uid,
 				authorName,
 				authorPhotoURL,
-				parentId: null,
-				createdAt: serverTimestamp()
+				createdAt: serverTimestamp(),
 			});
 
 			setCommentText("");
@@ -332,137 +324,10 @@ export default function PostDetail() {
 		}
 	};
 
-	const handleReplyClick = (commentId) => {
-		if (!currentUser) {
-			alert("Sign in to reply.");
-			return;
-		}
-		if (replyingTo === commentId) {
-			setReplyingTo(null);
-			setReplyText("");
-			setReplyError("");
-		} else {
-			setReplyingTo(commentId);
-			setReplyText("");
-			setReplyError("");
-		}
-	};
-
-	const handleSubmitReply = async (e, parentComment) => {
-		e.preventDefault();
-		setReplyError("");
-
-		if (!currentUser) {
-			alert("Sign in to reply.");
-			return;
-		}
-
-		const trimmed = replyText.trim();
-		if (!trimmed) return;
-
-		if (trimmed.length > 1000) {
-			setReplyError("Replies are limited to 1000 characters.");
-			return;
-		}
-
-		setReplySubmitting(true);
-
-		try {
-			const commentsRef = collection(db, "posts", post.id, "comments");
-
-			let authorName =
-				currentUser.displayName || currentUser.email || "Anonymous";
-			let authorPhotoURL = currentUser.photoURL || null;
-
-			try {
-				const profileSnap = await getDoc(
-					doc(db, "users", currentUser.uid)
-				);
-				if (profileSnap.exists()) {
-					const p = profileSnap.data();
-					authorName = p.displayName || p.name || authorName;
-					authorPhotoURL =
-						p.avatarUrl || p.photoURL || authorPhotoURL;
-				}
-			} catch (profileErr) {
-				console.error("Error loading profile for reply:", profileErr);
-			}
-
-			await addDoc(commentsRef, {
-				text: trimmed,
-				authorId: currentUser.uid,
-				authorName,
-				authorPhotoURL,
-				parentId: parentComment.id,
-				createdAt: serverTimestamp()
-			});
-
-			setReplyText("");
-			setReplyingTo(null);
-		} catch (err) {
-			console.error("Error adding reply:", err);
-			setReplyError(err?.message || "Failed to post reply. Try again.");
-		} finally {
-			setReplySubmitting(false);
-		}
-	};
-
 	const handleCommentAuthorClick = (authorId) => {
 		if (!authorId) return;
 		navigate(`/u/${authorId}`);
 	};
-
-	const handleDeleteComment = async (comment) => {
-		if (!currentUser) return;
-
-		const canDelete =
-			currentUser.uid === comment.authorId || isAdmin;
-		if (!canDelete) return;
-
-		const confirmed = window.confirm(
-			comment.parentId
-				? "Delete this reply?"
-				: "Delete this comment and all its replies?"
-		);
-		if (!confirmed) return;
-
-		try {
-			const deletes = [];
-
-			// delete this comment
-			deletes.push(
-				deleteDoc(
-					doc(db, "posts", post.id, "comments", comment.id)
-				)
-			);
-
-			// if it's a parent comment, also delete its replies
-			if (!comment.parentId) {
-				const repliesRef = collection(db, "posts", post.id, "comments");
-				const q = query(repliesRef, where("parentId", "==", comment.id));
-				const snap = await getDocs(q);
-				snap.forEach((d) => deletes.push(deleteDoc(d.ref)));
-			}
-
-			await Promise.all(deletes);
-		} catch (err) {
-			console.error("Error deleting comment:", err);
-		}
-	};
-
-	// split comments into top-level + replies map
-	const topLevelComments = comments.filter(
-		(c) => !c.parentId
-	);
-	const repliesByParent = {};
-	comments.forEach((c) => {
-		if (c.parentId) {
-			if (!repliesByParent[c.parentId]) {
-				repliesByParent[c.parentId] = [];
-			}
-			repliesByParent[c.parentId].push(c);
-		}
-	});
 
 	return (
 		<article className="post-detail">
@@ -487,9 +352,7 @@ export default function PostDetail() {
 								</div>
 								<div className="post-detail-author-text">
 									<span className="post-detail-author-label">By</span>
-									<span className="post-detail-author-name">
-										{displayName}
-									</span>
+									<span className="post-detail-author-name">{displayName}</span>
 								</div>
 							</button>
 
@@ -510,9 +373,7 @@ export default function PostDetail() {
 									</div>
 								</div>
 
-								{authorBio && (
-									<p className="author-popup-bio">{authorBio}</p>
-								)}
+								{authorBio && <p className="author-popup-bio">{authorBio}</p>}
 
 								<button
 									type="button"
@@ -537,7 +398,7 @@ export default function PostDetail() {
 						Back to posts
 					</button>
 
-					{canEditOrDeletePost && (
+					{canEditOrDelete && (
 						<button
 							className="btn btn-primary"
 							type="button"
@@ -547,11 +408,11 @@ export default function PostDetail() {
 						</button>
 					)}
 
-					{canEditOrDeletePost && (
+					{canEditOrDelete && (
 						<button
 							type="button"
 							className="icon-button delete-button"
-							onClick={handleDeletePost}
+							onClick={handleDelete}
 							disabled={deleting}
 							title="Delete post"
 						>
@@ -624,39 +485,24 @@ export default function PostDetail() {
 
 				{commentsLoading ? (
 					<p className="post-comments-meta">Loading comments…</p>
-				) : topLevelComments.length === 0 ? (
+				) : comments.length === 0 ? (
 					<p className="post-comments-meta">No comments yet.</p>
 				) : (
 					<div className="post-comments-list">
-						{topLevelComments.map((c) => {
+						{comments.map((c) => {
 							const cDate =
-								c.createdAt?.toDate &&
-								c.createdAt.toDate().toLocaleString();
+								c.createdAt?.toDate && c.createdAt.toDate().toLocaleString();
 							const cAvatar = c.authorPhotoURL || null;
 							const cInitial =
 								c.authorName && c.authorName.length
 									? c.authorName[0].toUpperCase()
 									: "?";
 
-							const canDeleteComment =
-								currentUser &&
-								(currentUser.uid === c.authorId || isAdmin);
-
-							const replies = repliesByParent[c.id] || [];
-
 							return (
 								<div key={c.id} className="post-comment">
-									<div
-										className="post-comment-avatar post-comment-avatar-clickable"
-										onClick={() =>
-											handleCommentAuthorClick(c.authorId)
-										}
-									>
+									<div className="post-comment-avatar">
 										{cAvatar ? (
-											<img
-												src={cAvatar}
-												alt={c.authorName || "User"}
-											/>
+											<img src={cAvatar} alt={c.authorName || "User"} />
 										) : (
 											<span>{cInitial}</span>
 										)}
@@ -666,244 +512,16 @@ export default function PostDetail() {
 											<button
 												type="button"
 												className="post-comment-author-button"
-												onClick={() =>
-													handleCommentAuthorClick(
-														c.authorId
-													)
-												}
+												onClick={() => handleCommentAuthorClick(c.authorId)}
 											>
 												{c.authorName || "Unknown"}
 											</button>
 											{cDate && (
-												<span className="post-comment-date">
-													{cDate}
-												</span>
+												<span className="post-comment-date">{cDate}</span>
 											)}
-											<div className="post-comment-header-actions">
-												<button
-													type="button"
-													className="post-comment-reply-button"
-													onClick={() =>
-														handleReplyClick(c.id)
-													}
-												>
-													Reply
-												</button>
-												{canDeleteComment && (
-													<button
-														type="button"
-														className="icon-button comment-delete-button"
-														onClick={() =>
-															handleDeleteComment(
-																c
-															)
-														}
-														title="Delete comment"
-													>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															width="14"
-															height="14"
-															viewBox="0 0 24 24"
-															fill="none"
-															stroke="currentColor"
-															strokeWidth="2"
-															strokeLinecap="round"
-															strokeLinejoin="round"
-														>
-															<polyline points="3 6 5 6 21 6" />
-															<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" />
-															<line x1="10" y1="11" x2="10" y2="17" />
-															<line x1="14" y1="11" x2="14" y2="17" />
-														</svg>
-													</button>
-												)}
-											</div>
 										</div>
-										<p className="post-comment-text">
-											{c.text}
-										</p>
 
-										{/* replies */}
-										{replies.length > 0 && (
-											<div className="post-comment-replies">
-												{replies.map((r) => {
-													const rDate =
-														r.createdAt?.toDate &&
-														r.createdAt
-															.toDate()
-															.toLocaleString();
-													const rAvatar =
-														r.authorPhotoURL || null;
-													const rInitial =
-														r.authorName &&
-														r.authorName.length
-															? r.authorName[0].toUpperCase()
-															: "?";
-
-													const canDeleteReply =
-														currentUser &&
-														(currentUser.uid ===
-															r.authorId ||
-															isAdmin);
-
-													return (
-														<div
-															key={r.id}
-															className="post-comment post-comment-reply"
-														>
-															<div
-																className="post-comment-avatar post-comment-avatar-clickable"
-																onClick={() =>
-																	handleCommentAuthorClick(
-																		r.authorId
-																	)
-																}
-															>
-																{rAvatar ? (
-																	<img
-																		src={
-																			rAvatar
-																		}
-																		alt={
-																			r.authorName ||
-																			"User"
-																		}
-																	/>
-																) : (
-																	<span>
-																		{
-																			rInitial
-																		}
-																	</span>
-																)}
-															</div>
-															<div className="post-comment-body">
-																<div className="post-comment-header">
-																	<button
-																		type="button"
-																		className="post-comment-author-button"
-																		onClick={() =>
-																			handleCommentAuthorClick(
-																				r.authorId
-																			)
-																		}
-																	>
-																		{r.authorName ||
-																			"Unknown"}
-																	</button>
-																	{rDate && (
-																		<span className="post-comment-date">
-																			{
-																				rDate
-																			}
-																		</span>
-																	)}
-																	<div className="post-comment-header-actions">
-																		{canDeleteReply && (
-																			<button
-																				type="button"
-																				className="icon-button comment-delete-button"
-																				onClick={() =>
-																					handleDeleteComment(
-																						r
-																					)
-																				}
-																				title="Delete reply"
-																			>
-																				<svg
-																					xmlns="http://www.w3.org/2000/svg"
-																					width="14"
-																					height="14"
-																					viewBox="0 0 24 24"
-																					fill="none"
-																					stroke="currentColor"
-																					strokeWidth="2"
-																					strokeLinecap="round"
-																					strokeLinejoin="round"
-																				>
-																					<polyline points="3 6 5 6 21 6" />
-																					<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" />
-																					<line
-																						x1="10"
-																						y1="11"
-																						x2="10"
-																						y2="17"
-																					/>
-																					<line
-																						x1="14"
-																						y1="11"
-																						x2="14"
-																						y2="17"
-																					/>
-																				</svg>
-																			</button>
-																		)}
-																	</div>
-																</div>
-																<p className="post-comment-text">
-																	{r.text}
-																</p>
-															</div>
-														</div>
-													);
-												})}
-											</div>
-										)}
-
-										{/* reply form under this comment */}
-										{replyingTo === c.id && currentUser && (
-											<form
-												onSubmit={(e) =>
-													handleSubmitReply(e, c)
-												}
-												className="post-comment-reply-form"
-											>
-												<textarea
-													className="post-comment-input post-comment-input-reply"
-													placeholder={`Reply to ${c.authorName || "this comment"}…`}
-													value={replyText}
-													onChange={(e) =>
-														setReplyText(
-															e.target.value
-														)
-													}
-													rows={2}
-												/>
-												<div className="post-comment-actions">
-													{replyError && (
-														<span className="error-text">
-															{replyError}
-														</span>
-													)}
-													<div className="post-comment-actions-buttons">
-														<button
-															type="button"
-															className="btn btn-secondary btn-sm"
-															onClick={() =>
-																handleReplyClick(
-																	c.id
-																)
-															}
-														>
-															Cancel
-														</button>
-														<button
-															type="submit"
-															className="btn btn-primary btn-sm"
-															disabled={
-																replySubmitting ||
-																!replyText.trim()
-															}
-														>
-															{replySubmitting
-																? "Posting…"
-																: "Post reply"}
-														</button>
-													</div>
-												</div>
-											</form>
-										)}
+										<p className="post-comment-text">{c.text}</p>
 									</div>
 								</div>
 							);
@@ -913,17 +531,12 @@ export default function PostDetail() {
 
 				<div className="post-comment-form-wrap">
 					{currentUser ? (
-						<form
-							onSubmit={handleSubmitComment}
-							className="post-comment-form"
-						>
+						<form onSubmit={handleSubmitComment} className="post-comment-form">
 							<div className="post-comment-form-header">
 								<div className="post-comment-avatar">
-									{(
-										currentProfile?.avatarUrl ||
-										currentProfile?.photoURL ||
-										currentUser.photoURL
-									) ? (
+									{currentProfile?.avatarUrl ||
+									currentProfile?.photoURL ||
+									currentUser.photoURL ? (
 										<img
 											src={
 												currentProfile?.avatarUrl ||
@@ -938,12 +551,10 @@ export default function PostDetail() {
 										/>
 									) : (
 										<span>
-											{(
-												currentProfile?.displayName ||
+											{(currentProfile?.displayName ||
 												currentUser.displayName ||
 												currentUser.email ||
-												"?"
-											)[0].toUpperCase()}
+												"?")[0].toUpperCase()}
 										</span>
 									)}
 								</div>
@@ -965,21 +576,14 @@ export default function PostDetail() {
 
 							<div className="post-comment-actions">
 								{commentError && (
-									<span className="error-text">
-										{commentError}
-									</span>
+									<span className="error-text">{commentError}</span>
 								)}
 								<button
 									type="submit"
 									className="btn btn-primary"
-									disabled={
-										commentSubmitting ||
-										!commentText.trim()
-									}
+									disabled={commentSubmitting || !commentText.trim()}
 								>
-									{commentSubmitting
-										? "Posting…"
-										: "Post comment"}
+									{commentSubmitting ? "Posting…" : "Post comment"}
 								</button>
 							</div>
 						</form>
